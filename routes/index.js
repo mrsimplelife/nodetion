@@ -171,4 +171,18 @@ router.post("/good/:id/bid", isLoggedIn, async (req, res, next) => {
     return next(error);
   }
 });
+
+router.get("/list", isLoggedIn, async (req, res, next) => {
+  try {
+    const goods = await Good.findAll({
+      where: { SoldId: req.user.id },
+      include: { model: Auction },
+      order: [[{ model: Auction }, "bid", "DESC"]],
+    });
+    res.render("list", { title: "list - NodeAution", goods });
+  } catch (error) {
+    console.error(error);
+    return next(error);
+  }
+});
 module.exports = router;

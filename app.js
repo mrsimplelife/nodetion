@@ -13,6 +13,8 @@ const indexRouter = require("./routes/index");
 const authRouter = require("./routes/auth");
 const webSocket = require("./socket");
 const sse = require("./sse");
+const checkAuction = require("./checkAuction");
+
 sequelize
   .sync({ force: false })
   .then(() => {
@@ -21,10 +23,11 @@ sequelize
   .catch((err) => {
     console.error(err);
   });
-
+checkAuction();
 passportConfig();
 
 const app = express();
+
 app.set("port", process.env.PORT || 3000);
 app.set("view engine", "html");
 nunjucks.configure("views", {
