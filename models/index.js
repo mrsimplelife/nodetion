@@ -1,4 +1,4 @@
-const Sequelize = require("sequelize");
+const { Sequelize } = require("sequelize");
 const User = require("./user");
 const Good = require("./good");
 const Auction = require("./auction");
@@ -13,7 +13,7 @@ const sequelize = new Sequelize(
   config.password,
   config
 );
-
+db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 db.User = User;
 db.Good = Good;

@@ -2,8 +2,8 @@ const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-
-const { Good, User, Auction } = require("../models");
+const schedule = require("node-schedule");
+const { Good, User, Auction, sequelize, Sequelize } = require("../models");
 const { isLoggedIn, isNotLoggedIn } = require("./middlewares");
 
 const router = express.Router();
@@ -64,11 +64,44 @@ router.post(
   async (req, res, next) => {
     try {
       const { name, price } = req.body;
-      await Good.create({
+      const good = await Good.create({
         OwnerId: req.user.id,
         name,
         img: req.file.filename,
         price,
+      });
+      const end = new Date();
+      end.setDate(end.setDate() + 1);
+      schedule.scheduleJob(end, async () => {
+        const t = await sequelize.transaction();
+        try {
+          const success = await Auction.findOne({
+            where: {
+              GoodId: good.id,
+            },
+            order: [["bid", "DESC"]],
+            transaction: t,
+          });
+          // await good.setSold(success.UserId);
+          await Good.update(
+            { SoldId: success.UserId },
+            {
+              where: { id: good.id },
+              transaction: t,
+            }
+          );
+          await User.update(
+            { money: Sequelize.literal(`money-${success.bid}`) },
+            {
+              where: { id: good.id },
+              transaction: t,
+            }
+          );
+          await t.commit();
+        } catch (error) {
+          console.log(error);
+          await t.rollback();
+        }
       });
       res.redirect("/");
     } catch (error) {
